@@ -43,7 +43,7 @@
     ballDom.style.left = `${paddleDom.offsetLeft + paddleDom.offsetWidth / 2}px`;
     ballDom.style.top = 'calc(100% - 30px)';
 
-    const destX = Math.random() > 0.5 ? 0 : maxLeft;
+    const destX = maxLeft;
     const destY = Math.random() * maxTop / 2;
     return { x: destX, y: destY };
   }
