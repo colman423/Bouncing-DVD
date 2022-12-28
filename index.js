@@ -18,6 +18,7 @@
   function init() {
     document.addEventListener('mousemove', paddleHandler);
     startButton.addEventListener('click', startGame);
+    brickCountDom.innerHTML = document.querySelectorAll('[data-collider="brick"]').length;
   }
 
   function startGame() {
