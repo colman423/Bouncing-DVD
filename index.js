@@ -1,44 +1,123 @@
 (function () {
-
+  const startButton = document.querySelector('#start-btn');
   const containerDom = document.querySelector('#container');
   const ballDom = document.querySelector('#ball');
+  const paddleDom = document.querySelector('#paddle');
+  const brickCountDom = document.querySelector('#brick-count');
+  const containerRect = containerDom.getBoundingClientRect();
+  const containerBorderWidth = parseInt(getComputedStyle(containerDom).getPropertyValue('border-width'));
+
 
   const maxLeft = containerDom.clientWidth - ballDom.offsetWidth;
   const maxTop = containerDom.clientHeight - ballDom.offsetHeight;
   const moveSpeed = ((maxLeft * maxLeft + maxTop * maxTop) ** 0.5) / 2;
-  const initDest = { x: 0, y: 0 };
 
   var brickDomList;
   var moveDisplacement = { x: 0, y: 0 };
 
   function init() {
-    refreshBrickList();
-    moveToNextDest(initDest);
-    window.requestAnimationFrame(handler);
+    document.addEventListener('mousemove', paddleHandler);
+    startButton.addEventListener('click', startGame);
   }
 
-  function handler(timestamp) {
+  function startGame() {
+    startButton.disabled = true;
+    refreshBrickList();
+    const initDest = refreshBall();
+    moveToNextDest(initDest);
+    window.requestAnimationFrame(frameHandler);
+  }
+
+  function endGame() {
+    clearBall();
+    startButton.disabled = false;
+  }
+
+  function refreshBrickList() {
+    brickDomList = Array.from(document.querySelectorAll('[data-collider]'));
+    brickCountDom.innerHTML = document.querySelectorAll('[data-collider="brick"]').length;
+  }
+
+  function refreshBall() {
+    ballDom.style.display = '';
+    ballDom.style.left = `${paddleDom.offsetLeft + paddleDom.offsetWidth / 2}px`;
+    ballDom.style.top = 'calc(100% - 30px)';
+
+    const destX = Math.random() > 0.5 ? 0 : maxLeft;
+    const destY = Math.random() * maxTop / 2;
+    return { x: destX, y: destY };
+  }
+
+  function clearBall() {
+    ballDom.style.display = 'none';
+    ballDom.style.top = '';
+    ballDom.style.left = '';
+    ballDom.style.transition = '';
+  }
+
+  function frameHandler(_timestamp) {
+    if (isBallHitGroundGround()) {
+      endGame();
+      return;
+    }
+    ballHandler();
+    window.requestAnimationFrame(frameHandler);
+  }
+
+  function paddleHandler(mouseEvt) {
+    const mouseX = clamp(
+      mouseEvt.clientX - containerRect.left - containerBorderWidth,
+      0,
+      maxLeft - paddleDom.offsetWidth + containerBorderWidth
+    );
+    paddleDom.style.left = `${mouseX}px`;
+  }
+
+  function ballHandler() {
+    const paddleHitDirection = getPaddleHitDirection();
+    if (paddleHitDirection) {
+      changeMovingDirection(paddleHitDirection);
+      return;
+    }
     const wallHitDirection = getWallHitDirection();
     if (wallHitDirection) {
       changeMovingDirection(wallHitDirection);
-    } else {
-      const brickCollideDirection = getBrickCollideDirection();
-      if (brickCollideDirection) {
-        changeMovingDirection(brickCollideDirection);
-      }
+      return;
     }
-    window.requestAnimationFrame(handler);
+    const brickCollideDirection = getBrickCollideDirection();
+    if (brickCollideDirection) {
+      changeMovingDirection(brickCollideDirection);
+      return;
+    }
+  }
+
+  function getPaddleHitDirection() {
+    const ballRect = ballDom.getBoundingClientRect();
+    const paddleRect = paddleDom.getBoundingClientRect();
+    if (hasRectCollision(ballRect, paddleRect)) {
+      return { x: false, y: true };
+    }
+    return null;
+  }
+
+
+  function isBallHitGroundGround() {
+    if (ballDom.offsetTop === maxTop) {
+      return true;
+    }
   }
 
   function getWallHitDirection() {
-    const hitWallX = ballDom.offsetLeft === 0 || ballDom.offsetLeft === maxLeft;
-    const hitWallY = ballDom.offsetTop === 0 || ballDom.offsetTop === maxTop;
-    if (hitWallX) {
-      if (hitWallY) {
+    const hitWallLeft = ballDom.offsetLeft === 0;
+    const hitWallRight = ballDom.offsetLeft === maxLeft;
+    const hitWallTop = ballDom.offsetTop === 0;
+
+    if (hitWallLeft || hitWallRight) {
+      if (hitWallTop) {
         return { x: true, y: true };
       }
       return { x: true, y: false };
-    } else if (hitWallY) {
+    } else if (hitWallTop) {
       return { x: false, y: true };
     }
     return null;
@@ -67,10 +146,6 @@
     return null;
   }
 
-  function refreshBrickList() {
-    brickDomList = Array.from(document.querySelectorAll('[data-collider]'));
-  }
-
   function changeMovingDirection(boundedDirection) {
     const cntPos = getCntPosition();
     const nextDest = getNextDest(cntPos, boundedDirection);
@@ -88,7 +163,6 @@
   function getCntPosition() {
     return { x: ballDom.offsetLeft, y: ballDom.offsetTop };
   }
-
 
   function getNextDest(cntPos, boundedDirection) {
     const moveVector = getBoundedVector(moveDisplacement, boundedDirection);
@@ -161,6 +235,10 @@
   }
 
   function removeBrick(element) {
+    if (element.dataset.collider === 'obstacle') {
+      return;
+    }
+
     const cloneElement = element.cloneNode(true);
 
     element.removeAttribute('data-collider');
@@ -168,13 +246,14 @@
     refreshBrickList();
 
     const brickRect = element.getBoundingClientRect();
-    const containerRect = containerDom.getBoundingClientRect();
-    const cloneLeft = brickRect.left - containerRect.left;
+    const cloneLeft = brickRect.left - containerRect.left - containerBorderWidth;
     const cloneTop = brickRect.top - containerRect.top;
     cloneElement.removeAttribute('data-collider');
     cloneElement.style.position = 'absolute';
     cloneElement.style.left = `${cloneLeft}px`;
     cloneElement.style.top = `${cloneTop}px`;
+    cloneElement.style.width = `${brickRect.width}px`;
+    cloneElement.style.height = `${brickRect.height}px`;
     cloneElement.style.transition = 'top 0.5s, left 0.5s';
 
     containerDom.appendChild(cloneElement);
@@ -193,5 +272,5 @@
     }, 1300);
   }
 
-  setTimeout(init, 1000);
+  init();
 })();

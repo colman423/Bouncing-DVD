@@ -18,16 +18,30 @@ body {
   height: 10px;
   background-color: green;
   border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   position: absolute;
-  top: 95%;
-  left: 50%;
   transition: all 0s linear;
   transition-duration: 0s;
 }
 
-h1, p {
-  display: inline;
+#paddle {
+  width: 100px;
+  height: 10px;
+  background-color: black;
+  border-radius: 8px;
+  position: absolute;
+  bottom: 10px;
+}
+
+*[data-collider="obstacle"] {
+  color: blue !important;
+}
+
+h1,
+h2,
+p {
+  display: inline-block;
+}
+
+.btn-start {
+  background-color: #e9ecef !important;
 }
