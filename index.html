@@ -1,16 +1,33 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-	<meta charset="UTF-8" />
+  <meta charset="UTF-8" />
   <!-- <meta name="viewport" content="width=device-width, initial-scale=1" /> -->
   <link href="./index.css" rel="stylesheet">
-	<title>DVD</title>
+  <title>Breackout Clone</title>
 </head>
+
 <body>
   <div id="container">
-    <div id="dvd">DVD</div>
+    <div id="ball"></div>
+
+    <h1 data-collider="brick">The form element</h1>
+
+    <form action="/action_page.php">
+      <label for="fname" data-collider="brick">First name:</label>
+      <input type="text" id="fname" name="fname" data-collider="brick"><br><br>
+      <label for="lname" data-collider="brick">Last name:</label>
+      <input type="text" id="lname" name="lname" data-collider="brick"><br><br>
+      <input type="submit" value="Submit" data-collider="brick">
+    </form>
+
+    <p data-collider="brick">Click the "Submit" button and the form-data will be sent to a page on the
+      server called "action_page.php".</p>
+
   </div>
 
   <script src="./index.js"></script>
 </body>
+
 </html>
